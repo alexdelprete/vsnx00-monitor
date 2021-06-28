@@ -12,11 +12,8 @@ import sys
 import wunderground
 import enelogic
 import domoticz
-<<<<<<< HEAD
 import sunspec_modbus_tcp
-=======
 import paho.mqtt.client as mqtt
->>>>>>> d9dde0493110812c307fa8dae7fd5e253366c773
 
 default_cfg = "~/.energy-monitor.cfg"
 
