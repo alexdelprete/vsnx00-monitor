@@ -1,4 +1,4 @@
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import json
 import logging
 import socket
@@ -6,11 +6,11 @@ __author__ = 'rkuipers'
 
 
 # Super this because the logger returns non-standard digest header: x-Digest
-class MyHTTPDigestAuthHandler(urllib2.HTTPDigestAuthHandler):
+class MyHTTPDigestAuthHandler(urllib.request.HTTPDigestAuthHandler):
 
     def retry_http_digest_auth(self, req, auth):
         token, challenge = auth.split(' ', 1)
-        chal = urllib2.parse_keqv_list(urllib2.parse_http_list(challenge))
+        chal = urllib.request.parse_keqv_list(urllib.request.parse_http_list(challenge))
         auth = self.get_authorization(req, chal)
         if auth:
 
@@ -29,7 +29,7 @@ class MyHTTPDigestAuthHandler(urllib2.HTTPDigestAuthHandler):
             # prompting for the information. Crap. This isn't great
             # but it's better than the current 'repeat until recursion
             # depth exceeded' approach <wink>
-            raise urllib2.HTTPError(req.get_full_url(), 401,
+            raise urllib.error.HTTPError(req.get_full_url(), 401,
                                     "digest auth failed",
                                     headers, None)
         else:
@@ -55,8 +55,9 @@ class Vsn300Reader():
 
     def get_last_stats(self):
         url = "http://" + self.host + "/v1/feeds/"
+        #url = "http://" + self.host + "/v1/status"
 
-        passman = urllib2.HTTPPasswordMgr()
+        passman = urllib.request.HTTPPasswordMgr()
         passman.add_password(self.realm, url, self.user, self.password)
         handler = MyHTTPDigestAuthHandler(passman)
         device_path = "ser4:" + self.inverter_id
@@ -70,29 +71,32 @@ class Vsn300Reader():
         else:
 
             try:
-                opener = urllib2.build_opener(handler)
-                urllib2.install_opener(opener)
-                json_response = urllib2.urlopen(url, timeout=10)
+                opener = urllib.request.build_opener(handler)
+                urllib.request.install_opener(opener)
+                json_response = urllib.request.urlopen(url, timeout=10)
                 parsed_json = json.load(json_response)
             except Exception as e:
                 self.logger.error(e)
                 return
 
         path = parsed_json['feeds'][device_path]['datastreams']
+        
+        self.logger.debug(path)
 
-        for k, v in path.iteritems():
+        for k, v in path.items():
 
-# Normally there are 10 data records, but on startup can be less records
-                idx = len(v['data'])-1
+                # Normally there are 10 data records, but on startup can be less records
+                #idx = len(v['data'])-1
+                idx = 0
                 self.logger.info(
 
                     str(k) + " - " + str(v['title']) + " - " +
-                    str(k) + " - " + str(v['description']) + " - " +
+                    # str(k) + " - " + str(v['description']) + " - " +
                     str(v['data'][idx]['timestamp']) + " - " +
                     str(v['data'][idx]['value']))
 
-                stats[k] = v['data'][idx]['value']
+                stats[k] = {"Title": str(v['title']), "Value": v['data'][idx]['value'], "Unit": str(v['units']), "Timestamp": v['data'][idx]['timestamp']}
 
-        self.logger.debug(stats)
+        self.logger.info(stats)
 
         return stats

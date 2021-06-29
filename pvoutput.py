@@ -1,8 +1,8 @@
-import urllib
-import httplib
+import urllib.request, urllib.parse, urllib.error
+import http.client
 import logging
 import socket
-from httplib import BadStatusLine
+from http.client import BadStatusLine
 
 
 class Connection():
@@ -48,10 +48,10 @@ class Connection():
         if import_shoulder:
             params['is'] = import_shoulder
 
-        for k, v in params.iteritems():
+        for k, v in params.items():
             self.logger.info("Using key: {0} with value: {1}".format(k, v))
 
-        params = urllib.urlencode(params)
+        params = urllib.parse.urlencode(params)
 
         response = self.make_request('POST', path, params)
 
@@ -104,10 +104,10 @@ class Connection():
         if net:
             params['n'] = 1
 
-        for k, v in params.iteritems():
+        for k, v in params.items():
             self.logger.info("Using key: {0} with value: {1}".format(k, v))
 
-        params = urllib.urlencode(params)
+        params = urllib.parse.urlencode(params)
 
         self.logger.debug(params)
 
@@ -130,14 +130,14 @@ class Connection():
             params['d'] = date
         if time:
             params['t'] = time
-        params = urllib.urlencode(params)
+        params = urllib.parse.urlencode(params)
 
         response = self.make_request("GET", path, params)
 
         if response.status == 400:
             raise ValueError(response.read())
         if response.status != 200:
-            raise StandardError(response.read())
+            raise Exception(response.read())
 
         return response.read()
 
@@ -150,19 +150,19 @@ class Connection():
             'd': date,
             't': time
         }
-        params = urllib.urlencode(params)
+        params = urllib.parse.urlencode(params)
 
         response = self.make_request("POST", path, params)
 
         if response.status == 400:
             raise ValueError(response.read())
         if response.status != 200:
-            raise StandardError(response.read())
+            raise Exception(response.read())
 
         return response.read()
 
     def make_request(self, method, path, params=None):
-        conn = httplib.HTTPConnection(self.host)
+        conn = http.client.HTTPConnection(self.host)
         headers = {
             'Content-type': 'application/x-www-form-urlencoded',
             'Accept': 'text/plain',
