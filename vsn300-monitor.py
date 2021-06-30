@@ -1,4 +1,4 @@
-import logging, argparse, os, sys, json, logging
+import logging, argparse, os, sys, json, logging, configparser
 import urllib.request, urllib.error, urllib.parse
 
 # Super this because the logger returns non-standard digest header: X-Digest
@@ -131,7 +131,7 @@ def func_get_vsn300_data(config):
     live_data = dict()
     vsn300_data = dict()
 
-    logger.info('GETTING live data from ABB VSN300 logger')
+    logger.info('Capturing live data from ABB VSN300 logger')
     pv_meter = Vsn300Reader(pv_host, pv_user, pv_password)
 
     logger.debug("Start - get_sys_data")
@@ -150,7 +150,7 @@ def func_get_vsn300_data(config):
         live_data = return_data
     else:
         live_data = None
-        logger.warning('No data received from VSN300 logger')
+        logger.warning('No live_data received from VSN300 logger. Exiting.')
     logger.debug("End - get_live_data")
 
     logger.debug("=======sys_data===========")
@@ -171,8 +171,6 @@ def func_get_vsn300_data(config):
 
 
 def write_config(path):
-
-    import configparser
 
     config = configparser.ConfigParser(allow_no_value=True)
 
@@ -196,8 +194,6 @@ def write_config(path):
 
 
 def read_config(path):
-
-    import configparser
 
     if not os.path.isfile(path):
         print(("Config file not found: {0}".format(path)))
