@@ -1,11 +1,5 @@
+import logging, argparse, os, sys, json, logging
 import urllib.request, urllib.error, urllib.parse
-import logging
-import argparse
-import os
-import sys
-import json
-import logging
-
 
 # Super this because the logger returns non-standard digest header: x-Digest
 class MyHTTPDigestAuthHandler(urllib.request.HTTPDigestAuthHandler):
@@ -76,7 +70,7 @@ class Vsn300Reader():
 
         path = parsed_json['keys']
         
-        self.logger.debug(path)
+        # self.logger.debug(path)
 
         for k, v in path.items():
 
@@ -84,7 +78,7 @@ class Vsn300Reader():
 
             sys_data[k] = {"Label": str(v['label']), "Value": v['value']}
 
-        self.logger.info(sys_data)
+        self.logger.debug(sys_data)
 
         return sys_data
 
@@ -108,65 +102,23 @@ class Vsn300Reader():
 
         path = parsed_json['feeds'][device_path]['datastreams']
         
-        self.logger.debug(path)
+        # self.logger.debug(path)
 
         for k, v in path.items():
 
             # ADP: get only latest record (0)
             idx = 0
 
-            self.logger.debug(str(k) + " - " + str(v['title']) + " - " + " - " + str(v['data'][idx]['value']))
+            self.logger.debug(str(k) + " - " + str(v['title']) + " - " + str(v['data'][idx]['value']) + " - " + str(v['units']))
 
             live_data[k] = {"Title": str(v['title']), "Value": v['data'][idx]['value'], "Unit": str(v['units'])}
 
-        self.logger.info(live_data)
+        self.logger.debug(live_data)
 
         return live_data
 
 
-default_cfg = ".\vsn300-monitor.cfg"
-
-parser = argparse.ArgumentParser(description="Energy Monitor help")
-parser.add_argument('-c', '--config', nargs='?', const=default_cfg,
-                    help='Config file location')
-parser.add_argument('--create-config', nargs='?',
-                    const=default_cfg,
-                    help="Create a config file, defaults to "
-                         "energy-monitor.cfg or specify an "
-                         "alternative location",
-                    metavar="path")
-parser.add_argument('-v', '--verbose', help='Verbose logging ',
-                    action="store_true", default=False)
-parser.add_argument('--debug', help='Debug logging ',
-                    action="store_true", default=False)
-
-args = parser.parse_args()
-
-# Set logging
-logger = logging.getLogger()
-
-if args.verbose:
-    logger.setLevel(logging.INFO)
-elif args.debug:
-    logger.setLevel(logging.DEBUG)
-else:
-    logger.setLevel(logging.WARNING)
-
-# create console handler and set level to debug
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-
-# create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - '
-                              '%(levelname)s - %(message)s')
-
-# add formatter to ch
-ch.setFormatter(formatter)
-
-# add ch to logger
-logger.addHandler(ch)
-
-def func_get_vsn300_data(config):
+def func_get_vsn300_data(config, logger):
 
     pv_host = config.get('VSN300', 'host')
     pv_interval = config.getint('VSN300', 'interval')
@@ -174,8 +126,9 @@ def func_get_vsn300_data(config):
     pv_user = config.get('VSN300', 'username')
     pv_password = config.get('VSN300', 'password')
 
-    global glob_sys_data
-    global glob_live_data
+    sys_data = dict()
+    live_data = dict()
+    vsn300_data = dict()
 
     logger.info('GETTING live data from ABB VSN300 logger')
     pv_meter = Vsn300Reader(pv_host, pv_user, pv_password, pv_inverter_serial)
@@ -183,20 +136,36 @@ def func_get_vsn300_data(config):
     logger.debug("Start - get_sys_data")
     return_data = pv_meter.get_sys_data()
     if not return_data is None:
-        glob_sys_data = return_data
+        sys_data = return_data
     else:
-        glob_sys_data = None
+        sys_data = None
         logger.warning('No data received from VSN300 logger')
     logger.debug("End - get_sys_data")
 
     logger.debug("Start - get_live_data")
     return_data = pv_meter.get_live_data()
     if not return_data is None:
-        glob_live_data = return_data
+        live_data = return_data
     else:
-        glob_live_data = None
+        live_data = None
         logger.warning('No data received from VSN300 logger')
     logger.debug("End - get_live_data")
+
+    logger.debug("=======sys_data===========")
+    logger.debug(sys_data)
+    logger.debug("=======live_data===========")
+    logger.debug(live_data)
+
+    # Merge the two dicts
+    sys_data.update(live_data)
+
+    # JSONify the merged dict
+    vsn300_data = json.dumps(sys_data)
+
+    logger.debug("=======vsn300_data===========")
+    logger.debug(vsn300_data)
+    
+    return vsn300_data
 
 
 def write_config(path):
@@ -206,7 +175,7 @@ def write_config(path):
     config = configparser.ConfigParser(allow_no_value=True)
 
     config.add_section('VSN300')
-    config.set('VSN300', '# enable: turn data retrieval on or off')
+    config.set('VSN300', '# enable: turn data capture on or off')
     config.set('VSN300', '# hostname:  or IP of the logger')
     config.set('VSN300', '# inverter_serial: serial can be found in the'
                          ' webui: data -> '  'system info ->'
@@ -253,6 +222,49 @@ def read_config(path):
 
 def main():
 
+    # Init
+    default_cfg = "vsn300-monitor.cfg"
+
+    parser = argparse.ArgumentParser(description="Energy Monitor help")
+    parser.add_argument('-c', '--config', nargs='?', const=default_cfg,
+                        help='Config file location')
+    parser.add_argument('--create-config', nargs='?',
+                        const=default_cfg,
+                        help="Create a config file, defaults to "
+                            "energy-monitor.cfg or specify an "
+                            "alternative location",
+                        metavar="path")
+    parser.add_argument('-v', '--verbose', help='Verbose logging ',
+                        action="store_true", default=False)
+    parser.add_argument('-d', '--debug', help='Debug logging ',
+                        action="store_true", default=False)
+
+    args = parser.parse_args()
+
+    # Set logging
+    logger = logging.getLogger()
+
+    if args.verbose:
+        logger.setLevel(logging.INFO)
+    elif args.debug:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.WARNING)
+
+    # create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+
+    # create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - '
+                                '%(levelname)s - %(message)s')
+
+    # add formatter to ch
+    ch.setFormatter(formatter)
+
+    # add ch to logger
+    logger.addHandler(ch)
+
     if args.create_config:
         write_config(args.create_config)
         exit()
@@ -269,11 +281,17 @@ def main():
     pv_interval = config.getint('VSN300', 'interval')
 
     if pv_enable:
-        logger.info("STARTING PV/VSN300 data retrieve")
-        func_get_vsn300_data(config)
+        logger.info("STARTING VSN300 data capture")
+        vsn300_data = func_get_vsn300_data(config, logger)
+        logger.info("Data capture ended. Here's the JSON data:")
+        logger.info("========= VSN300 Data =========")
+        logger.info(vsn300_data)
+        logger.info("========= VSN300 Data =========")
+        return vsn300_data
 
+# Begin
 try:
-    main()
+    print(main())
 except KeyboardInterrupt:
     # quit
     print ("...Ctrl-C received!... exiting")
