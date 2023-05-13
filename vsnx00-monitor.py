@@ -33,10 +33,11 @@ class MyHTTPDigestAuthHandler(urllib.request.HTTPDigestAuthHandler):
                 return self.retry_http_digest_auth(req, authreq)
 
 
-class Vsn300Reader():
+class vsnx00Reader():
 
-    def __init__(self, host, user, password):
-        
+    def __init__(self, vsnmodel, host, user, password):
+
+        self.vsnmodel = vsnmodel
         self.host = host
         self.user = user
         self.password = password
@@ -48,7 +49,11 @@ class Vsn300Reader():
 
         self.passman = urllib.request.HTTPPasswordMgr()
         self.passman.add_password(self.realm, self.url_host, self.user, self.password)
-        self.handler = MyHTTPDigestAuthHandler(self.passman)
+        self.logger.debug("Check VSN model: {0}".format(self.vsnmodel))
+        if self.vsnmodel == 'vsn300':
+            self.handler = MyHTTPDigestAuthHandler(self.passman)
+        elif self.vsnmodel == 'vsn700':
+            self.handler = urllib.request.HTTPBasicAuthHandler(self.passman)
         self.opener = urllib.request.build_opener(self.handler)
         urllib.request.install_opener(self.opener)
         self.sys_data = dict()
@@ -60,7 +65,7 @@ class Vsn300Reader():
         # system data feed
         url_sys_data = self.url_host + "/v1/status"
 
-        self.logger.info("Getting VSN300 data from: {0}".format(url_sys_data))
+        self.logger.info("Getting VSNX00 data from: {0}".format(url_sys_data))
 
         try:
             json_response = urllib.request.urlopen(url_sys_data, timeout=10)
@@ -70,7 +75,7 @@ class Vsn300Reader():
             return
 
         path = parsed_json['keys']
-        
+
         for k, v in path.items():
 
             self.logger.debug(str(k) + " - " + str(v['label']) + " - " + str(v['value']))
@@ -79,7 +84,8 @@ class Vsn300Reader():
 
         self.logger.debug(self.sys_data)
 
-        return self.sys_data
+        # return self.sys_data
+        return parsed_json
 
     def get_live_data(self):
 
@@ -87,14 +93,14 @@ class Vsn300Reader():
         if not self.sys_data['device.invID']['Value']:
             self.logger.error("Inverter ID is empty")
             return
-            
+
         # data feed
         url_live_data = self.url_host + "/v1/feeds/"
 
         # select ser4 feed (energy data)
         device_path = "ser4:" + self.sys_data['device.invID']['Value']
 
-        self.logger.info("Getting VSN300 data from: {0}".format(url_live_data))
+        self.logger.info("Getting VSNX00 data from: {0}".format(url_live_data))
 
         try:
             json_response = urllib.request.urlopen(url_live_data, timeout=10)
@@ -104,7 +110,7 @@ class Vsn300Reader():
             return
 
         path = parsed_json['feeds'][device_path]['datastreams']
-        
+
         for k, v in path.items():
 
             # ADP: get only latest record (0)
@@ -116,23 +122,25 @@ class Vsn300Reader():
 
         self.logger.debug(self.live_data)
 
-        return self.live_data
+        # return self.live_data
+        return parsed_json
 
 
-def func_get_vsn300_data(config):
+def func_get_vsnx00_data(config):
 
     logger = logging.getLogger()
 
-    pv_host = config.get('VSN300', 'host')
-    pv_user = config.get('VSN300', 'username')
-    pv_password = config.get('VSN300', 'password')
+    pv_vsnmodel = config.get('VSNX00', 'vsnmodel').lower()
+    pv_host = config.get('VSNX00', 'host').lower()
+    pv_user = config.get('VSNX00', 'username').lower()
+    pv_password = config.get('VSNX00', 'password')
 
     sys_data = dict()
     live_data = dict()
-    vsn300_data = dict()
+    vsnx00_data = dict()
 
-    logger.info('Capturing live data from ABB VSN300 logger')
-    pv_meter = Vsn300Reader(pv_host, pv_user, pv_password)
+    logger.info('Capturing live data from ABB VSNX00 logger')
+    pv_meter = vsnx00Reader(pv_vsnmodel, pv_host, pv_user, pv_password)
 
     logger.debug("Start - get_sys_data")
     return_data = pv_meter.get_sys_data()
@@ -140,7 +148,7 @@ def func_get_vsn300_data(config):
         sys_data = return_data
     else:
         sys_data = None
-        logger.warning('No sys_data received from VSN300 logger. Exiting.')
+        logger.warning('No sys_data received from VSNX00 logger. Exiting.')
         return None
     logger.debug("End - get_sys_data")
 
@@ -150,7 +158,7 @@ def func_get_vsn300_data(config):
         live_data = return_data
     else:
         live_data = None
-        logger.warning('No live_data received from VSN300 logger. Exiting.')
+        logger.warning('No live_data received from VSNX00 logger. Exiting.')
     logger.debug("End - get_live_data")
 
     logger.debug("=======sys_data===========")
@@ -162,26 +170,28 @@ def func_get_vsn300_data(config):
     sys_data.update(live_data)
 
     # JSONify the merged dict
-    vsn300_data = json.dumps(sys_data)
+    vsnx00_data = json.dumps(sys_data)
 
-    logger.debug("=======vsn300_data===========")
-    logger.debug(vsn300_data)
-    
-    return vsn300_data
+    logger.debug("=======vsnx00_data===========")
+    logger.debug(vsnx00_data)
+
+    return vsnx00_data
 
 
 def write_config(path):
 
     config = configparser.ConfigParser(allow_no_value=True)
 
-    config.add_section('VSN300')
-    config.set('VSN300', '# hostname: hostname or IP of the logger')
-    config.set('VSN300', '# username: is either guest or admin')
-    config.set('VSN300', '# password: as set on webui')
-    config.set('VSN300', '# ')
-    config.set('VSN300', 'host', '192.168.1.12')
-    config.set('VSN300', 'username', 'guest')
-    config.set('VSN300', 'password', 'pw')
+    config.add_section('VSNX00')
+    config.set('VSNX00', '# vsnmodel: VSN300 or VSN700')
+    config.set('VSNX00', '# hostname: hostname/IP of the VSN datalogger')
+    config.set('VSNX00', '# username: guest or admin')
+    config.set('VSNX00', '# password: if user is admin, set the password')
+    config.set('VSNX00', '# ')
+    config.set('VSNX00', 'vsnmodel', 'VSN300')
+    config.set('VSNX00', 'host', '192.168.1.112')
+    config.set('VSNX00', 'username', 'guest')
+    config.set('VSNX00', 'password', 'pw')
 
     path = os.path.expanduser(path)
 
@@ -210,9 +220,9 @@ def read_config(path):
 def main():
 
     # Init
-    default_cfg = "vsn300-monitor.cfg"
+    default_cfg = "vsnx00-monitor.cfg"
 
-    parser = argparse.ArgumentParser(description="VSN300 Monitor help")
+    parser = argparse.ArgumentParser(description="VSNX00 Monitor help")
     parser.add_argument('-c', '--config', nargs='?', const=default_cfg, help="config file location", metavar="path/file")
     parser.add_argument('-w', '--writeconfig', nargs='?',const=default_cfg, help="create a default config file", metavar="path/file")
     parser.add_argument('-v', '--verbose', help='verbose logging', action="store_true", default=False)
@@ -257,17 +267,17 @@ def main():
 
     config = read_config(path)
 
-    logger.info("STARTING VSN300 data capture")
-    vsn300_data = func_get_vsn300_data(config)
+    logger.info("STARTING VSNX00 data capture")
+    vsnx00_data = func_get_vsnx00_data(config)
 
-    if vsn300_data is None:
+    if vsnx00_data is None:
         logger.error("Error capturing data. Exiting...")
     else:
         logger.info("Data capture ended. Here's the JSON data:")
-        logger.info("========= VSN300 Data =========")
-        logger.info(vsn300_data)
-        logger.info("========= VSN300 Data =========")
-        return vsn300_data
+        logger.info("========= VSNX00 Data =========")
+        logger.info(vsnx00_data)
+        logger.info("========= VSNX00 Data =========")
+        return vsnx00_data
 
 # Begin
 try:
