@@ -82,10 +82,14 @@ class vsnx00Reader():
 
             self.sys_data[k] = {"Label": str(v['label']), "Value": v['value']}
 
-        self.logger.debug(self.sys_data)
+        #self.logger.debug(self.sys_data)
 
-        # return self.sys_data
-        return parsed_json
+        self.logger.debug("=======AX: start sys_data===========")
+        self.logger.debug(parsed_json)
+        self.logger.debug("=======AX: end sys_data===========")
+
+        return self.sys_data
+        # return parsed_json
 
     def get_live_data(self):
 
@@ -95,7 +99,7 @@ class vsnx00Reader():
             return
 
         # data feed
-        url_live_data = self.url_host + "/v1/feeds/"
+        url_live_data = self.url_host + "/v1/feeds"
 
         # select ser4 feed (energy data)
         device_path = "ser4:" + self.sys_data['device.invID']['Value']
@@ -120,10 +124,14 @@ class vsnx00Reader():
 
             self.live_data[k] = {"Title": str(v['title']), "Value": v['data'][idx]['value'], "Unit": str(v['units'])}
 
-        self.logger.debug(self.live_data)
+        # self.logger.debug(self.live_data)
 
-        # return self.live_data
-        return parsed_json
+        self.logger.debug("=======AX: start live_data===========")
+        self.logger.debug(parsed_json)
+        self.logger.debug("=======AX: end live_data===========")
+
+        return self.live_data
+        # return parsed_json
 
 
 def func_get_vsnx00_data(config):
