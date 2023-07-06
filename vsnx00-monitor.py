@@ -1,5 +1,5 @@
 import logging, argparse, os, sys, json, logging, configparser
-import urllib.request, urllib.error, urllib.parse
+import urllib.request, urllib.parse, urllib.error, urllib.response
 
 # Super this because the logger returns non-standard digest header: X-Digest
 class MyHTTPDigestAuthHandler(urllib.request.HTTPDigestAuthHandler):
@@ -41,13 +41,17 @@ class vsnx00Reader():
         self.host = host
         self.user = user
         self.password = password
-        self.realm = 'registered_user@power-one.com'
+        self.realm = None
+        # if self.vsnmodel == 'vsn300':
+        #     self.realm = 'registered_user@power-one.com'
+        # elif self.vsnmodel == 'vsn700':
+        #     self.realm = None
 
         self.logger = logging.getLogger(__name__)
 
         self.url_host = "http://" + self.host
 
-        self.passman = urllib.request.HTTPPasswordMgr()
+        self.passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
         self.passman.add_password(self.realm, self.url_host, self.user, self.password)
         self.logger.debug("Check VSN model: {0}".format(self.vsnmodel))
         if self.vsnmodel == 'vsn300':
