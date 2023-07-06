@@ -51,7 +51,7 @@ class vsnx00Reader():
 
         self.url_host = "http://" + self.host
 
-        self.passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+        self.passman = urllib.request.HTTPPasswordMgrWithPriorAuth()
         self.passman.add_password(self.realm, self.url_host, self.user, self.password)
         self.logger.debug("Check VSN model: {0}".format(self.vsnmodel))
         if self.vsnmodel == 'vsn300':
