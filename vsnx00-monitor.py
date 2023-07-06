@@ -2,7 +2,7 @@ import logging, argparse, os, sys, json, logging, configparser
 import urllib.request, urllib.parse, urllib.error, urllib.response
 
 # Super this because the logger returns non-standard digest header: X-Digest
-class MyHTTPDigestAuthHandler(urllib.request.HTTPDigestAuthHandler):
+class VSN300HTTPDigestAuthHandler(urllib.request.HTTPDigestAuthHandler):
 
     def retry_http_digest_auth(self, req, auth):
         token, challenge = auth.split(' ', 1)
@@ -54,11 +54,9 @@ class vsnx00Reader():
         self.passman = urllib.request.HTTPPasswordMgrWithPriorAuth()
         self.passman.add_password(self.realm, self.url_host, self.user, self.password)
         self.logger.debug("Check VSN model: {0}".format(self.vsnmodel))
-        if self.vsnmodel == 'vsn300':
-            self.handler = MyHTTPDigestAuthHandler(self.passman)
-        elif self.vsnmodel == 'vsn700':
-            self.handler = urllib.request.HTTPBasicAuthHandler(self.passman)
-        self.opener = urllib.request.build_opener(self.handler)
+        self.handler_vsn300 = VSN300HTTPDigestAuthHandler(self.passman)
+        self.handler_vsn700 = urllib.request.HTTPBasicAuthHandler(self.passman)
+        self.opener = urllib.request.build_opener(self.handler_vsn700, self.handler_vsn300)
         urllib.request.install_opener(self.opener)
         self.sys_data = dict()
         self.live_data = dict()
