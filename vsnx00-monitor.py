@@ -5,7 +5,7 @@ import urllib.request, urllib.parse, urllib.error, urllib.response
 class VSN300HTTPDigestAuthHandler(urllib.request.HTTPDigestAuthHandler):
 
     def retry_http_digest_auth(self, req, auth):
-        challenge = auth.split(' ', 1)
+        token, challenge = auth.split(' ', 1)
         chal = urllib.request.parse_keqv_list(urllib.request.parse_http_list(challenge))
         auth = self.get_authorization(req, chal)
         if auth:
