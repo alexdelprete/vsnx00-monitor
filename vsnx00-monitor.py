@@ -155,47 +155,36 @@ class vsnx00Reader():
 
         return self.live_data
 
-    def get_vsn700_live_data(self):
+    def get_vsn700_sys_data(self):
 
-        # # Check if sys_data has been captured, Inv_ID is needed
-        # if not self.sys_data['device.invID']['Value']:
-        #     self.logger.error("Inverter ID is empty")
-        #     return
+        # system data feed
+        url_sys_data = self.url_host + "/v1/status"
 
-        # data feed
-        url_live_data = self.url_host + "/v1/status"
-
-        # # select ser4 feed (energy data)
-        # device_path = "ser4:" + self.sys_data['device.invID']['Value']
-
-        self.logger.info("Getting VSNX00 data from: {0}".format(url_live_data))
+        self.logger.info("Getting VSNX00 data from: {0}".format(url_sys_data))
 
         try:
-            json_response = urllib.request.urlopen(url_live_data, timeout=10)
+            json_response = urllib.request.urlopen(url_sys_data, timeout=10)
             parsed_json = json.load(json_response)
         except Exception as e:
             self.logger.error(e)
             return
 
-        # path = parsed_json['feeds'][device_path]['datastreams']
+        path = parsed_json['keys']
 
-        # for k, v in path.items():
+        for k, v in path.items():
 
-        #     # ADP: get only latest record (0)
-        #     idx = 0
+            self.logger.debug(str(k) + " - " + str(v['label']) + " - " + str(v['value']))
 
-        #     self.logger.debug(str(k) + " - " + str(v['title']) + " - " + str(v['data'][idx]['value']) + " - " + str(v['units']))
+            self.sys_data[k] = {"Label": str(v['label']), "Value": v['value']}
 
-        #     self.live_data[k] = {"Title": str(v['title']), "Value": v['data'][idx]['value'], "Unit": str(v['units'])}
+        #self.logger.debug(self.sys_data)
 
-        # self.logger.debug(self.live_data)
-
-        self.logger.debug("=======AX: start live_data===========")
+        self.logger.debug("=======AX: start sys_data===========")
         self.logger.debug(parsed_json)
-        self.logger.debug("=======AX: end live_data===========")
+        self.logger.debug("=======AX: end sys_data===========")
 
-        #return self.live_data
-        return parsed_json
+        return self.sys_data
+        # return parsed_json
 
 
 def func_get_vsnx00_data(config):
@@ -247,21 +236,18 @@ def func_get_vsnx00_data(config):
         sys_data.update(live_data)
 
     elif pv_vsnmodel == 'vsn700':
-        logger.debug("Start - get_vsn700_live_data")
-        return_data = pv_meter.get_vsn700_live_data()
+        logger.debug("Start - get_vsn700_sys_data")
+        return_data = pv_meter.get_vsn700_sys_data()
 
         if not return_data is None:
-            live_data = return_data
+            sys_data = return_data
         else:
-            live_data = None
-            logger.warning('No live_data received from VSNX00 logger. Exiting.')
-        logger.debug("End - get_vsn700_live_data")
+            sys_data = None
+            logger.warning('No sys_data received from VSNX00 logger. Exiting.')
+        logger.debug("End - get_vsn700_sys_data")
 
-        logger.debug("=======live_data===========")
-        logger.debug(live_data)
-
-        # Copy live_data in sys_data
-        sys_data.update(live_data)
+        logger.debug("=======sys_data===========")
+        logger.debug(sys_data)
 
     # JSONify the merged dict
     vsnx00_data = json.dumps(sys_data)
