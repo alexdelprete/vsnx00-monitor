@@ -205,8 +205,8 @@ def func_get_vsnx00_data(config):
     pv_password = config.get('VSNX00', 'password')
 
     sys_data = dict()
-    vsnx00_data = dict()
     live_data = dict()
+    vsnx00_data = dict()
 
     logger.info('Capturing live data from ABB VSNX00 logger')
     pv_meter = vsnx00Reader(pv_vsnmodel, pv_host, pv_user, pv_password)
