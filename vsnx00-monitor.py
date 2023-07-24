@@ -163,7 +163,7 @@ class vsnx00Reader():
         #     return
 
         # data feed
-        url_live_data = self.url_host + "/v1/livedata"
+        url_live_data = self.url_host + "/v1/status"
 
         # # select ser4 feed (energy data)
         # device_path = "ser4:" + self.sys_data['device.invID']['Value']
