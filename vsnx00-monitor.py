@@ -157,16 +157,16 @@ class vsnx00Reader():
 
     def get_vsn700_live_data(self):
 
-        # Check if sys_data has been captured, Inv_ID is needed
-        if not self.sys_data['device.invID']['Value']:
-            self.logger.error("Inverter ID is empty")
-            return
+        # # Check if sys_data has been captured, Inv_ID is needed
+        # if not self.sys_data['device.invID']['Value']:
+        #     self.logger.error("Inverter ID is empty")
+        #     return
 
-        # data feed
-        url_live_data = self.url_host + "/v1/livedata"
+        # # data feed
+        # url_live_data = self.url_host + "/v1/livedata"
 
-        # select ser4 feed (energy data)
-        device_path = "ser4:" + self.sys_data['device.invID']['Value']
+        # # select ser4 feed (energy data)
+        # device_path = "ser4:" + self.sys_data['device.invID']['Value']
 
         self.logger.info("Getting VSNX00 data from: {0}".format(url_live_data))
 
@@ -177,16 +177,16 @@ class vsnx00Reader():
             self.logger.error(e)
             return
 
-        path = parsed_json['feeds'][device_path]['datastreams']
+        # path = parsed_json['feeds'][device_path]['datastreams']
 
-        for k, v in path.items():
+        # for k, v in path.items():
 
-            # ADP: get only latest record (0)
-            idx = 0
+        #     # ADP: get only latest record (0)
+        #     idx = 0
 
-            self.logger.debug(str(k) + " - " + str(v['title']) + " - " + str(v['data'][idx]['value']) + " - " + str(v['units']))
+        #     self.logger.debug(str(k) + " - " + str(v['title']) + " - " + str(v['data'][idx]['value']) + " - " + str(v['units']))
 
-            self.live_data[k] = {"Title": str(v['title']), "Value": v['data'][idx]['value'], "Unit": str(v['units'])}
+        #     self.live_data[k] = {"Title": str(v['title']), "Value": v['data'][idx]['value'], "Unit": str(v['units'])}
 
         # self.logger.debug(self.live_data)
 
@@ -194,7 +194,8 @@ class vsnx00Reader():
         self.logger.debug(parsed_json)
         self.logger.debug("=======AX: end live_data===========")
 
-        return self.live_data
+        #return self.live_data
+        return parsed_json
 
 
 def func_get_vsnx00_data(config):
