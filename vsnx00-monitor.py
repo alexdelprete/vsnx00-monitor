@@ -1,4 +1,4 @@
-import logging, argparse, os, sys, json, logging, configparser
+import logging, argparse, os, sys, json, logging, configparser, base64
 import urllib.request, urllib.parse, urllib.error, urllib.response
 
 # Super this because the logger returns non-standard digest header: X-Digest
@@ -32,6 +32,25 @@ class VSN300HTTPDigestAuthHandler(urllib.request.HTTPDigestAuthHandler):
             if scheme.lower() == 'x-digest':
                 return self.retry_http_digest_auth(req, authreq)
 
+class VSN700HTTPPreemptiveBasicAuthHandler(urllib.request.HTTPBasicAuthHandler):
+    '''Preemptive basic auth: https://stackoverflow.com/a/24048772
+
+    Instead of waiting for a 403 to then retry with the credentials,
+    send the credentials if the url is handled by the password manager.
+    Note: please use realm=None when calling add_password.'''
+    def http_request(self, req):
+        url = req.get_full_url()
+        realm = None
+        # this is very similar to the code from retry_http_basic_auth()
+        # but returns a request object.
+        user, pw = self.passwd.find_user_password(realm, url)
+        if pw:
+            raw = "%s:%s" % (user, pw)
+            auth = 'Basic %s' % base64.b64encode(raw).strip()
+            req.add_unredirected_header(self.auth_header, auth)
+        return req
+
+    https_request = http_request
 
 class vsnx00Reader():
 
@@ -55,14 +74,14 @@ class vsnx00Reader():
         self.passman.add_password(self.realm, self.url_host, self.user, self.password)
         self.logger.debug("Check VSN model: {0}".format(self.vsnmodel))
         self.handler_vsn300 = VSN300HTTPDigestAuthHandler(self.passman)
-        self.handler_vsn700 = urllib.request.HTTPBasicAuthHandler(self.passman)
+        self.handler_vsn700 = VSN700HTTPPreemptiveBasicAuthHandler(self.passman)
         self.opener = urllib.request.build_opener(self.handler_vsn700, self.handler_vsn300)
         urllib.request.install_opener(self.opener)
         self.sys_data = dict()
         self.live_data = dict()
 
 
-    def get_sys_data(self):
+    def get_vsn300_sys_data(self):
 
         # system data feed
         url_sys_data = self.url_host + "/v1/status"
@@ -93,7 +112,7 @@ class vsnx00Reader():
         return self.sys_data
         # return parsed_json
 
-    def get_live_data(self):
+    def get_vsn300_live_data(self):
 
         # Check if sys_data has been captured, Inv_ID is needed
         if not self.sys_data['device.invID']['Value']:
@@ -133,7 +152,47 @@ class vsnx00Reader():
         self.logger.debug("=======AX: end live_data===========")
 
         return self.live_data
-        # return parsed_json
+
+    def get_vsn700_live_data(self):
+
+        # Check if sys_data has been captured, Inv_ID is needed
+        if not self.sys_data['device.invID']['Value']:
+            self.logger.error("Inverter ID is empty")
+            return
+
+        # data feed
+        url_live_data = self.url_host + "/v1/livedata"
+
+        # select ser4 feed (energy data)
+        device_path = "ser4:" + self.sys_data['device.invID']['Value']
+
+        self.logger.info("Getting VSNX00 data from: {0}".format(url_live_data))
+
+        try:
+            json_response = urllib.request.urlopen(url_live_data, timeout=10)
+            parsed_json = json.load(json_response)
+        except Exception as e:
+            self.logger.error(e)
+            return
+
+        path = parsed_json['feeds'][device_path]['datastreams']
+
+        for k, v in path.items():
+
+            # ADP: get only latest record (0)
+            idx = 0
+
+            self.logger.debug(str(k) + " - " + str(v['title']) + " - " + str(v['data'][idx]['value']) + " - " + str(v['units']))
+
+            self.live_data[k] = {"Title": str(v['title']), "Value": v['data'][idx]['value'], "Unit": str(v['units'])}
+
+        # self.logger.debug(self.live_data)
+
+        self.logger.debug("=======AX: start live_data===========")
+        self.logger.debug(parsed_json)
+        self.logger.debug("=======AX: end live_data===========")
+
+        return self.live_data
 
 
 def func_get_vsnx00_data(config):
@@ -146,38 +205,60 @@ def func_get_vsnx00_data(config):
     pv_password = config.get('VSNX00', 'password')
 
     sys_data = dict()
-    live_data = dict()
     vsnx00_data = dict()
+    live_data = dict()
 
     logger.info('Capturing live data from ABB VSNX00 logger')
     pv_meter = vsnx00Reader(pv_vsnmodel, pv_host, pv_user, pv_password)
 
-    logger.debug("Start - get_sys_data")
-    return_data = pv_meter.get_sys_data()
-    if not return_data is None:
-        sys_data = return_data
-    else:
-        sys_data = None
-        logger.warning('No sys_data received from VSNX00 logger. Exiting.')
-        return None
-    logger.debug("End - get_sys_data")
+    if pv_vsnmodel == 'vsn300':
+        logger.debug("Start - get_vsn300_sys_data")
+        return_data = pv_meter.get_vsn300_sys_data()
 
-    logger.debug("Start - get_live_data")
-    return_data = pv_meter.get_live_data()
-    if not return_data is None:
-        live_data = return_data
-    else:
-        live_data = None
-        logger.warning('No live_data received from VSNX00 logger. Exiting.')
-    logger.debug("End - get_live_data")
+        if not return_data is None:
+            sys_data = return_data
+        else:
+            sys_data = None
+            logger.warning('No sys_data received from VSNX00 logger. Exiting.')
+            return None
 
-    logger.debug("=======sys_data===========")
-    logger.debug(sys_data)
-    logger.debug("=======live_data===========")
-    logger.debug(live_data)
+        logger.debug("End - get_vsn300_sys_data")
 
-    # Merge the two dicts
-    sys_data.update(live_data)
+        logger.debug("Start - get_vsn300_live_data")
+        live_data = dict()
+        return_data = pv_meter.get_vsn300_live_data()
+
+        if not return_data is None:
+            live_data = return_data
+        else:
+            live_data = None
+            logger.warning('No live_data received from VSNX00 logger. Exiting.')
+        logger.debug("End - get_vsn300_live_data")
+
+        logger.debug("=======sys_data===========")
+        logger.debug(sys_data)
+        logger.debug("=======live_data===========")
+        logger.debug(live_data)
+
+        # Merge the two dicts
+        sys_data.update(live_data)
+
+    elif pv_vsnmodel == 'vsn700':
+        logger.debug("Start - get_vsn700_live_data")
+        return_data = pv_meter.get_vsn700_live_data()
+
+        if not return_data is None:
+            live_data = return_data
+        else:
+            live_data = None
+            logger.warning('No live_data received from VSNX00 logger. Exiting.')
+        logger.debug("End - get_vsn700_live_data")
+
+        logger.debug("=======live_data===========")
+        logger.debug(live_data)
+
+        # Copy live_data in sys_data
+        sys_data.update(live_data)
 
     # JSONify the merged dict
     vsnx00_data = json.dumps(sys_data)
