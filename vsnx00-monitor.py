@@ -162,8 +162,8 @@ class vsnx00Reader():
         #     self.logger.error("Inverter ID is empty")
         #     return
 
-        # # data feed
-        # url_live_data = self.url_host + "/v1/livedata"
+        # data feed
+        url_live_data = self.url_host + "/v1/livedata"
 
         # # select ser4 feed (energy data)
         # device_path = "ser4:" + self.sys_data['device.invID']['Value']
