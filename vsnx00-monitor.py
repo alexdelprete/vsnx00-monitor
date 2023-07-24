@@ -66,6 +66,10 @@ class vsnx00Reader():
         # elif self.vsnmodel == 'vsn700':
         #     self.realm = None
 
+        self.sys_data = dict()
+        self.live_data = dict()
+        self.vsnx00_data = dict()
+
         self.logger = logging.getLogger(__name__)
 
         self.url_host = "http://" + self.host
@@ -77,9 +81,6 @@ class vsnx00Reader():
         self.handler_vsn700 = VSN700HTTPPreemptiveBasicAuthHandler(self.passman)
         self.opener = urllib.request.build_opener(self.handler_vsn700, self.handler_vsn300)
         urllib.request.install_opener(self.opener)
-        self.sys_data = dict()
-        self.live_data = dict()
-        self.vsnx00_data = dict()
 
 
     def get_vsn300_sys_data(self):
