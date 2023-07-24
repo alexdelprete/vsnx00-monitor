@@ -79,6 +79,7 @@ class vsnx00Reader():
         urllib.request.install_opener(self.opener)
         self.sys_data = dict()
         self.live_data = dict()
+        self.vsnx00_data = dict()
 
 
     def get_vsn300_sys_data(self):
