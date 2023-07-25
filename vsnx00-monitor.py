@@ -16,7 +16,7 @@ class VSN300HTTPDigestAuthHandler(urllib.request.HTTPDigestAuthHandler):
             resp = self.parent.open(req, timeout=req.timeout)
             return resp
 
-    def http_error_auth_reqed(self, auth_header, host, req, headers):
+    def http_error_auth_reqed(self, auth_header, url, req, headers):
         authreq = headers.get(auth_header, None)
         if self.retried > 5:
             # Don't fail endlessly - if we failed once, we'll probably
@@ -46,25 +46,22 @@ class VSN700HTTPPreemptiveBasicAuthHandler(urllib.request.HTTPBasicAuthHandler):
         user, pw = self.passwd.find_user_password(realm, url)
         if pw:
             raw = "%s:%s" % (user, pw)
-            auth = 'Basic %s' % base64.b64encode(raw).strip()
-            req.add_unredirected_header(self.auth_header, auth)
+            raw_b64 = base64.standard_b64encode(raw.encode('utf-8'))
+            auth_val = 'Basic %s' % raw_b64.decode('utf-8')
+            req.add_unredirected_header(self.auth_header, auth_val)
         return req
 
     https_request = http_request
 
 class vsnx00Reader():
 
-    def __init__(self, vsnmodel, host, user, password):
+    def __init__(self, vsnmodel, url, user, password):
 
         self.vsnmodel = vsnmodel
-        self.host = host
+        self.url = url
         self.user = user
         self.password = password
         self.realm = None
-        # if self.vsnmodel == 'vsn300':
-        #     self.realm = 'registered_user@power-one.com'
-        # elif self.vsnmodel == 'vsn700':
-        #     self.realm = None
 
         self.sys_data = dict()
         self.live_data = dict()
@@ -72,13 +69,15 @@ class vsnx00Reader():
 
         self.logger = logging.getLogger(__name__)
 
-        self.url_host = "http://" + self.host
-
         self.passman = urllib.request.HTTPPasswordMgrWithPriorAuth()
-        self.passman.add_password(self.realm, self.url_host, self.user, self.password)
+        self.passman.add_password(self.realm, self.url, self.user, self.password)
         self.logger.debug("Check VSN model: {0}".format(self.vsnmodel))
         self.handler_vsn300 = VSN300HTTPDigestAuthHandler(self.passman)
         self.handler_vsn700 = VSN700HTTPPreemptiveBasicAuthHandler(self.passman)
+        # if self.vsnmodel == 'vsn300':
+        #     self.opener = urllib.request.build_opener(self.handler_vsn300)
+        # elif self.vsnmodel == 'vsn700':
+        #     self.opener = urllib.request.build_opener(self.handler_vsn700)
         self.opener = urllib.request.build_opener(self.handler_vsn700, self.handler_vsn300)
         urllib.request.install_opener(self.opener)
 
@@ -86,7 +85,7 @@ class vsnx00Reader():
     def get_vsn300_sys_data(self):
 
         # system data feed
-        url_sys_data = self.url_host + "/v1/status"
+        url_sys_data = self.url + "/v1/status"
 
         self.logger.info("Getting VSNX00 data from: {0}".format(url_sys_data))
 
@@ -122,7 +121,7 @@ class vsnx00Reader():
             return
 
         # data feed
-        url_live_data = self.url_host + "/v1/feeds"
+        url_live_data = self.url + "/v1/feeds"
 
         # select ser4 feed (energy data)
         device_path = "ser4:" + self.sys_data['device.invID']['Value']
@@ -158,7 +157,7 @@ class vsnx00Reader():
     def get_vsn700_sys_data(self):
 
         # system data feed
-        url_sys_data = self.url_host + "/v1/status"
+        url_sys_data = self.url + "/v1/status"
 
         self.logger.info("Getting VSNX00 data from: {0}".format(url_sys_data))
 
@@ -171,23 +170,14 @@ class vsnx00Reader():
             self.logger.error(e)
             return
 
-        self.logger.info("Get keys path data")
-        path = parsed_json['keys']
-
-        for k, v in path.items():
-
-            self.logger.debug(str(k) + " - " + str(v['label']) + " - " + str(v['value']))
-
-            self.sys_data[k] = {"Label": str(v['label']), "Value": v['value']}
-
         #self.logger.debug(self.sys_data)
 
         self.logger.debug("=======AX: start sys_data===========")
         self.logger.debug(parsed_json)
         self.logger.debug("=======AX: end sys_data===========")
 
-        return self.sys_data
-        # return parsed_json
+        #return self.sys_data
+        return parsed_json
 
 
 def func_get_vsnx00_data(config):
@@ -195,8 +185,8 @@ def func_get_vsnx00_data(config):
     logger = logging.getLogger()
 
     pv_vsnmodel = config.get('VSNX00', 'vsnmodel').lower()
-    pv_host = config.get('VSNX00', 'host').lower()
-    pv_user = config.get('VSNX00', 'username').lower()
+    pv_url = config.get('VSNX00', 'url')
+    pv_user = config.get('VSNX00', 'username')
     pv_password = config.get('VSNX00', 'password')
 
     sys_data = dict()
@@ -204,7 +194,7 @@ def func_get_vsnx00_data(config):
     vsnx00_data = dict()
 
     logger.info('Capturing live data from ABB VSNX00 logger')
-    pv_meter = vsnx00Reader(pv_vsnmodel, pv_host, pv_user, pv_password)
+    pv_meter = vsnx00Reader(pv_vsnmodel, pv_url, pv_user, pv_password)
 
     if pv_vsnmodel == 'vsn300':
         logger.debug("Start - get_vsn300_sys_data")
@@ -267,12 +257,12 @@ def write_config(path):
 
     config.add_section('VSNX00')
     config.set('VSNX00', '# vsnmodel: VSN300 or VSN700')
-    config.set('VSNX00', '# hostname: hostname/IP of the VSN datalogger')
+    config.set('VSNX00', '# url: URL of the VSN datalogger (including HTTP/HTTPS prefix)')
     config.set('VSNX00', '# username: guest or admin')
     config.set('VSNX00', '# password: if user is admin, set the password')
     config.set('VSNX00', '# ')
     config.set('VSNX00', 'vsnmodel', 'VSN300')
-    config.set('VSNX00', 'host', '192.168.1.112')
+    config.set('VSNX00', 'url', '192.168.1.112')
     config.set('VSNX00', 'username', 'guest')
     config.set('VSNX00', 'password', 'pw')
 
