@@ -16,7 +16,7 @@ class VSN300HTTPDigestAuthHandler(urllib.request.HTTPDigestAuthHandler):
             resp = self.parent.open(req, timeout=req.timeout)
             return resp
 
-    def http_error_auth_reqed(self, auth_header, url, req, headers):
+    def http_error_auth_reqed(self, auth_header, host, req, headers):
         authreq = headers.get(auth_header, None)
         if self.retried > 5:
             # Don't fail endlessly - if we failed once, we'll probably
@@ -59,27 +59,34 @@ class vsnx00Reader():
 
         self.vsnmodel = vsnmodel
         self.url = url
+        parsed_url = urllib.parse.urlparse(url)
+        self.host = parsed_url.hostname
         self.user = user
         self.password = password
         self.realm = None
-
-        self.sys_data = dict()
-        self.live_data = dict()
-        self.vsnx00_data = dict()
+        if self.vsnmodel == 'vsn300':
+            self.realm = 'registered_user@power-one.com'
+        elif self.vsnmodel == 'vsn700':
+            self.realm = None
 
         self.logger = logging.getLogger(__name__)
 
         self.passman = urllib.request.HTTPPasswordMgrWithPriorAuth()
         self.passman.add_password(self.realm, self.url, self.user, self.password)
         self.logger.debug("Check VSN model: {0}".format(self.vsnmodel))
-        self.handler_vsn300 = VSN300HTTPDigestAuthHandler(self.passman)
-        self.handler_vsn700 = VSN700HTTPPreemptiveBasicAuthHandler(self.passman)
         # if self.vsnmodel == 'vsn300':
+        #     self.handler_vsn300 = VSN300HTTPDigestAuthHandler(self.passman)
         #     self.opener = urllib.request.build_opener(self.handler_vsn300)
         # elif self.vsnmodel == 'vsn700':
+        #     self.handler_vsn700 = VSN700HTTPPreemptiveBasicAuthHandler(self.passman)
         #     self.opener = urllib.request.build_opener(self.handler_vsn700)
+        self.handler_vsn300 = VSN300HTTPDigestAuthHandler(self.passman)
+        self.handler_vsn700 = VSN700HTTPPreemptiveBasicAuthHandler(self.passman)
         self.opener = urllib.request.build_opener(self.handler_vsn700, self.handler_vsn300)
         urllib.request.install_opener(self.opener)
+        self.sys_data = dict()
+        self.live_data = dict()
+        self.vsnx00_data = dict()
 
 
     def get_vsn300_sys_data(self):
@@ -185,7 +192,7 @@ def func_get_vsnx00_data(config):
     logger = logging.getLogger()
 
     pv_vsnmodel = config.get('VSNX00', 'vsnmodel').lower()
-    pv_url = config.get('VSNX00', 'url')
+    pv_url = config.get('VSNX00', 'url').lower()
     pv_user = config.get('VSNX00', 'username')
     pv_password = config.get('VSNX00', 'password')
 
