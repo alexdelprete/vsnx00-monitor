@@ -47,7 +47,7 @@ class VSN700HTTPPreemptiveBasicAuthHandler(urllib.request.HTTPBasicAuthHandler):
         if pw:
             raw = "%s:%s" % (user, pw)
             raw_b64 = base64.standard_b64encode(raw.encode('utf-8'))
-            auth_val = 'Basic %s' % raw_b64.decode('utf-8')
+            auth_val = 'Basic %s' % raw_b64.decode('utf-8').strip()
             req.add_unredirected_header(self.auth_header, auth_val)
         return req
 
