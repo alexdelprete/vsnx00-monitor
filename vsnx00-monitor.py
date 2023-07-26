@@ -64,29 +64,21 @@ class vsnx00Reader():
         self.user = user
         self.password = password
         self.realm = None
-        if self.vsnmodel == 'vsn300':
-            self.realm = 'registered_user@power-one.com'
-        elif self.vsnmodel == 'vsn700':
-            self.realm = None
+
+        self.sys_data = dict()
+        self.live_data = dict()
+        self.vsnx00_data = dict()
 
         self.logger = logging.getLogger(__name__)
 
         self.passman = urllib.request.HTTPPasswordMgrWithPriorAuth()
         self.passman.add_password(self.realm, self.url, self.user, self.password)
         self.logger.debug("Check VSN model: {0}".format(self.vsnmodel))
-        # if self.vsnmodel == 'vsn300':
-        #     self.handler_vsn300 = VSN300HTTPDigestAuthHandler(self.passman)
-        #     self.opener = urllib.request.build_opener(self.handler_vsn300)
-        # elif self.vsnmodel == 'vsn700':
-        #     self.handler_vsn700 = VSN700HTTPPreemptiveBasicAuthHandler(self.passman)
-        #     self.opener = urllib.request.build_opener(self.handler_vsn700)
         self.handler_vsn300 = VSN300HTTPDigestAuthHandler(self.passman)
         self.handler_vsn700 = VSN700HTTPPreemptiveBasicAuthHandler(self.passman)
         self.opener = urllib.request.build_opener(self.handler_vsn700, self.handler_vsn300)
         urllib.request.install_opener(self.opener)
-        self.sys_data = dict()
-        self.live_data = dict()
-        self.vsnx00_data = dict()
+
 
 
     def get_vsn300_sys_data(self):
