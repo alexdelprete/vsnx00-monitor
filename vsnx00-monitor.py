@@ -13,7 +13,7 @@ class VSN300HTTPDigestAuthHandler(urllib.request.HTTPDigestAuthHandler):
             if req.headers.get(self.auth_header, None) == auth_val:
                 return None
             req.add_unredirected_header(self.auth_header, auth_val)
-            resp = self.parent.open(req, timeout=req.timeout)
+            resp = urllib.request.urlopen(req, timeout=req.timeout)
             return resp
 
     def http_error_auth_reqed(self, auth_header, host, req, headers):
