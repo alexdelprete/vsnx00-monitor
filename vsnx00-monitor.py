@@ -97,7 +97,7 @@ class vsnx00Reader():
         self.logger.info("Getting VSNX00 data from: {0}".format(url_sys_data))
 
         try:
-            json_response = urllib.request.urlopen(url_sys_data, timeout=10)
+            json_response = urllib.request.urlopen(url_sys_data, timeout=20)
             parsed_json = json.load(json_response)
         except Exception as e:
             self.logger.error(e)
