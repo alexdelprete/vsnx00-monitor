@@ -4,6 +4,7 @@ import configparser
 import json
 import logging
 import os
+import ssl
 import sys
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
@@ -15,7 +16,8 @@ from urllib.request import (HTTPBasicAuthHandler, HTTPDigestAuthHandler,
 
 def make_request(requested_url):
     try:
-        return urlopen(requested_url, timeout=10)
+        unverified_context = ssl._create_unverified_context()
+        return urlopen(requested_url, timeout=10, context=unverified_context)
     except HTTPError as error:
         print(error.status, error.reason)
     except URLError as error:
