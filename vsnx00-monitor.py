@@ -57,16 +57,15 @@ class VSN300HTTPDigestAuthHandler(HTTPDigestAuthHandler):
 
 
 class VSN700HTTPPreemptiveBasicAuthHandler(HTTPBasicAuthHandler):
-    '''Preemptive basic auth: https://stackoverflow.com/a/24048772
-
-    Instead of waiting for a 403 to then retry with the credentials,
-    send the credentials if the url is handled by the password manager.
-    Note: please use realm=None when calling add_password.'''
+    # Preemptive basic auth: https://stackoverflow.com/a/24048772
+    # Instead of waiting for a 403 to then retry with the credentials,
+    # send the credentials if the url is handled by the password manager.
+    # Note: please use realm=None when calling add_password
     def http_request(self, req):
         url = req.get_full_url()
         realm = None
         # this is very similar to the code from retry_http_basic_auth()
-        # but returns a request object.
+        # but returns a request object
         user, pw = self.passwd.find_user_password(realm, url)
         if pw:
             raw = "%s:%s" % (user, pw)
