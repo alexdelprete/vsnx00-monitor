@@ -80,11 +80,10 @@ class VSN700HTTPPreemptiveBasicAuthHandler(HTTPBasicAuthHandler):
 
 class vsnx00Reader():
 
-    def __init__(self, vsnmodel, url, user, password):
+    def __init__(self, url, user, password):
 
         self.logger = logging.getLogger(__name__)
 
-        self.vsnmodel = vsnmodel
         self.url = url
         parsed_url = urlparse(url)
         self.host = parsed_url.hostname
@@ -99,14 +98,13 @@ class vsnx00Reader():
 
         self.passman = HTTPPasswordMgrWithPriorAuth()
         self.passman.add_password(self.realm, self.url, self.user, self.password)
-        self.logger.debug("Check VSN model: {0}".format(self.vsnmodel))
         self.handler_vsn300 = VSN300HTTPDigestAuthHandler(self.passman)
         self.handler_vsn700 = VSN700HTTPPreemptiveBasicAuthHandler(self.passman)
         self.opener = build_opener(self.handler_vsn700, self.handler_vsn300)
         install_opener(self.opener)
 
 
-    def get_vsn300_status_data(self):
+    def get_vsnx00_status_data(self):
 
         # system data feed
         url_status_data = self.url + "/v1/status"
@@ -118,114 +116,13 @@ class vsnx00Reader():
         self.logger.info("JSON to object")
         parsed_json = json.load(json_response)
 
-        path = parsed_json['keys']
-
-        for k, v in path.items():
-
-            self.logger.debug(str(k) + " - " + str(v['label']) + " - " + str(v['value']))
-
-            self.status_data[k] = {"Label": str(v['label']), "Value": v['value']}
-
-        self.logger.debug("======= get_vsn300_status_data(): parsed_json ===========")
+        self.logger.debug("======= get_vsnx00_status_data(): parsed_json ===========")
         self.logger.debug(parsed_json)
-        self.logger.debug("======= get_vsn300_status_data(): END ===========")
-
-        self.logger.debug("======= get_vsn300_status_data(): status_data ===========")
-        self.logger.debug(self.status_data)
-        self.logger.debug("======= get_vsn300_status_data(): END ===========")
-
-        # return self.status_data
-        return parsed_json
-
-    def get_vsn300_live_data(self):
-
-        # system data feed
-        url_live_data = self.url + "/v1/livedata"
-
-        self.logger.info("Getting VSNX00 livedata from: {0}".format(url_live_data))
-
-        self.logger.info("Opening live URL")
-        json_response = make_request(url_live_data)
-        self.logger.info("JSON to object")
-        parsed_json = json.load(json_response)
-
-        # path = parsed_json['keys']
-        # for k, v in path.items():
-        #     self.logger.debug(str(k) + " - " + str(v['label']) + " - " + str(v['value']))
-        #     self.live_data[k] = {"Label": str(v['label']), "Value": v['value']}
-
-        self.logger.debug("======= get_vsn300_live_data(): parsed_json ===========")
-        self.logger.debug(parsed_json)
-        self.logger.debug("======= get_vsn300_live_data(): END ===========")
-
-        # self.logger.debug("======= get_vsn300_live_data(): live_data ===========")
-        # self.logger.debug(self.live_data)
-        # self.logger.debug("======= get_vsn300_live_data(): END ===========")
-
-        # return self.live_data
-        return parsed_json
-
-    def get_vsn300_feeds_data(self):
-
-        # Check if status_data has been captured, Inv_ID is needed
-        if not self.status_data['device.invID']['Value']:
-            self.logger.error("Inverter ID is empty")
-            return
-
-        # data feed
-        url_feeds_data = self.url + "/v1/feeds"
-
-        # select ser4 feed (energy data)
-        device_path = "ser4:" + self.status_data['device.invID']['Value']
-
-        self.logger.info("Getting VSNX00 feeds data from: {0}".format(url_feeds_data))
-
-        self.logger.info("Opening feeds URL")
-        json_response = make_request(url_feeds_data)
-        self.logger.info("JSON to object")
-        parsed_json = json.load(json_response)
-
-        path = parsed_json['feeds'][device_path]['datastreams']
-
-        for k, v in path.items():
-
-            # ADP: get only latest record (0)
-            idx = 0
-
-            self.logger.debug(str(k) + " - " + str(v['title']) + " - " + str(v['data'][idx]['value']) + " - " + str(v['units']))
-            self.feeds_data[k] = {"Title": str(v['title']), "Value": v['data'][idx]['value'], "Unit": str(v['units'])}
-
-        self.logger.debug("======= get_vsn300_feeds_data(): parsed_json ===========")
-        self.logger.debug(parsed_json)
-        self.logger.debug("======= get_vsn300_feeds_data(): END ===========")
-
-        self.logger.debug("======= get_vsn300_feeds_data(): feeds_data ===========")
-        self.logger.debug(self.feeds_data)
-        self.logger.debug("======= get_vsn300_feeds_data(): END ===========")
-
-        # return self.feeds_data
-        return parsed_json
-
-
-    def get_vsn700_status_data(self):
-
-        # system data feed
-        url_status_data = self.url + "/v1/status"
-
-        self.logger.info("Getting VSNX00 status data from: {0}".format(url_status_data))
-
-        self.logger.info("Opening status URL")
-        json_response = make_request(url_status_data)
-        self.logger.info("JSON to object")
-        parsed_json = json.load(json_response)
-
-        self.logger.debug("======= get_vsn700_status_data(): parsed_json ===========")
-        self.logger.debug(parsed_json)
-        self.logger.debug("======= get_vsn700_status_data(): END ===========")
+        self.logger.debug("======= get_vsnx00_status_data(): END ===========")
 
         return parsed_json
 
-    def get_vsn700_live_data(self):
+    def get_vsnx00_live_data(self):
 
         # system data feed
         url_live_data = self.url + "/v1/livedata"
@@ -237,13 +134,13 @@ class vsnx00Reader():
         self.logger.info("JSON to object")
         parsed_json = json.load(json_response)
 
-        self.logger.debug("======= get_vsn700_live_data(): parsed_json ===========")
+        self.logger.debug("======= get_vsnx00_live_data(): parsed_json ===========")
         self.logger.debug(parsed_json)
-        self.logger.debug("======= get_vsn700_live_data(): END ===========")
+        self.logger.debug("======= get_vsnx00_live_data(): END ===========")
 
         return parsed_json
 
-    def get_vsn700_feeds_data(self):
+    def get_vsnx00_feeds_data(self):
 
         # system data feed
         url_feeds_data = self.url + "/v1/feeds"
@@ -255,9 +152,9 @@ class vsnx00Reader():
         self.logger.info("JSON to object")
         parsed_json = json.load(json_response)
 
-        self.logger.debug("======= get_vsn700_feeds_data(): parsed_json ===========")
+        self.logger.debug("======= get_vsnx00_feeds_data(): parsed_json ===========")
         self.logger.debug(parsed_json)
-        self.logger.debug("======= get_vsn700_feeds_data(): END ===========")
+        self.logger.debug("======= get_vsnx00_feeds_data(): END ===========")
 
         return parsed_json
 
@@ -265,7 +162,6 @@ def get_vsnx00_data(config):
 
     logger = logging.getLogger()
 
-    pv_vsnmodel = config.get('VSNX00', 'vsnmodel').lower()
     pv_url = config.get('VSNX00', 'url').lower()
     pv_user = config.get('VSNX00', 'username')
     pv_password = config.get('VSNX00', 'password')
@@ -276,87 +172,44 @@ def get_vsnx00_data(config):
     vsnx00_data = dict()
 
     logger.info('Capturing live data from ABB VSNX00 logger')
-    pv_meter = vsnx00Reader(pv_vsnmodel, pv_url, pv_user, pv_password)
+    pv_meter = vsnx00Reader(pv_url, pv_user, pv_password)
 
-    if pv_vsnmodel == 'vsn300':
+    # VSN700 status
+    logger.debug("Start - get_vsnx00_status_data")
+    status_data = pv_meter.get_vsnx00_status_data()
+    if status_data is None:
+        logger.warning('No status_data received from VSNX00 logger. Exiting.')
+        return None
+    else:
+        # Append dict
+        vsnx00_data.update(status_data)
+    logger.debug("End - get_vsnx00_status_data")
 
-        # VSN300 status
-        logger.debug("Start - get_vsn300_status_data")
-        status_data = pv_meter.get_vsn300_status_data()
-        if status_data is None:
-            logger.warning('No status_data received from VSNX00 logger. Exiting.')
-            return None
-        else:
-            # Append dict
-            vsnx00_data.update(status_data)
-        logger.debug("End - get_vsn300_status_data")
+    # VSN700 livedata
+    logger.debug("Start - get_vsnx00_live_data")
+    live_data = pv_meter.get_vsnx00_live_data()
+    if live_data is None:
+        logger.warning('No live_data received from VSNX00 logger. Exiting.')
+        return None
+    else:
+        # Append dict
+        vsnx00_data.update(live_data)
+    logger.debug("End - get_vsnx00_live_data")
 
-        # VSN300 livedata
-        logger.debug("Start - get_vsn300_live_data")
-        live_data = pv_meter.get_vsn300_live_data()
-        if live_data is None:
-            logger.warning('No live_data received from VSNX00 logger. Exiting.')
-            return None
-        else:
-            # Append dict
-            vsnx00_data.update(live_data)
-        logger.debug("End - get_vsn300_live_data")
+    # VSN700 feeds
+    logger.debug("Start - get_vsnx00_feeds_data")
+    feeds_data = pv_meter.get_vsnx00_feeds_data()
+    if feeds_data is None:
+        logger.warning('No feeds_data received from VSNX00 logger. Exiting.')
+        return None
+    else:
+        # Append dict
+        vsnx00_data.update(feeds_data)
+    logger.debug("End - get_vsnx00_feeds_data")
 
-        # VSN300 feeds
-        logger.debug("Start - get_vsn300_feeds_data")
-        feeds_data = pv_meter.get_vsn300_feeds_data()
-        if feeds_data is None:
-            logger.warning('No feeds_data received from VSNX00 logger. Exiting.')
-            return None
-        else:
-            # Append dict
-            vsnx00_data.update(feeds_data)
-        logger.debug("End - get_vsn300_feeds_data")
-
-        logger.debug("======= get_vsnx00_data(): vsnx00_data ===========")
-        logger.debug(vsnx00_data)
-        logger.debug("======= get_vsnx00_data(): END ===========")
-    elif pv_vsnmodel == 'vsn700':
-
-        # VSN700 status
-        logger.debug("Start - get_vsn700_status_data")
-        status_data = pv_meter.get_vsn700_status_data()
-        if status_data is None:
-            logger.warning('No status_data received from VSNX00 logger. Exiting.')
-            return None
-        else:
-            # Append dict
-            vsnx00_data.update(status_data)
-        logger.debug("End - get_vsn700_status_data")
-
-        # VSN700 livedata
-        logger.debug("Start - get_vsn700_live_data")
-        live_data = pv_meter.get_vsn700_live_data()
-        if live_data is None:
-            logger.warning('No live_data received from VSNX00 logger. Exiting.')
-            return None
-        else:
-            # Append dict
-            vsnx00_data.update(live_data)
-        logger.debug("End - get_vsn700_live_data")
-
-        # VSN700 feeds
-        logger.debug("Start - get_vsn700_feeds_data")
-        feeds_data = pv_meter.get_vsn700_feeds_data()
-        if feeds_data is None:
-            logger.warning('No feeds_data received from VSNX00 logger. Exiting.')
-            return None
-        else:
-            # Append dict
-            vsnx00_data.update(feeds_data)
-        logger.debug("End - get_vsn700_feeds_data")
-
-        # JSONify the three merged dicts
-        vsnx00_data = json.dumps(vsnx00_data)
-
-        logger.debug("======= get_vsnx00_data(): vsnx00_data ===========")
-        logger.debug(vsnx00_data)
-        logger.debug("======= get_vsnx00_data(): END ===========")
+    logger.debug("======= get_vsnx00_data(): vsnx00_data ===========")
+    logger.debug(vsnx00_data)
+    logger.debug("======= get_vsnx00_data(): END ===========")
 
     # JSONify the three merged dicts
     vsnx00_data = json.dumps(vsnx00_data)
@@ -370,12 +223,10 @@ def write_config(path):
     config = configparser.ConfigParser(allow_no_value=True)
 
     config.add_section('VSNX00')
-    config.set('VSNX00', '# vsnmodel: VSN300 or VSN700')
     config.set('VSNX00', '# url: URL of the VSN datalogger (including HTTP/HTTPS prefix)')
     config.set('VSNX00', '# username: guest or admin')
     config.set('VSNX00', '# password: if user is admin, set the password')
     config.set('VSNX00', '# ')
-    config.set('VSNX00', 'vsnmodel', 'VSN300')
     config.set('VSNX00', 'url', '192.168.1.112')
     config.set('VSNX00', 'username', 'guest')
     config.set('VSNX00', 'password', 'pw')
@@ -468,8 +319,8 @@ def main():
 
 # Begin
 try:
-    # print(main())
-    main()
+    print(main())
+    # main()
 except KeyboardInterrupt:
     # quit
     print ("...Ctrl-C received!... exiting")
