@@ -175,7 +175,7 @@ def get_vsnx00_data(config):
     logger.info('Capturing live data from ABB VSNX00 logger')
     pv_meter = vsnx00Reader(pv_url, pv_user, pv_password)
 
-    # VSN700 status
+    # VSNx00 status
     logger.debug("Start - get_vsnx00_status_data")
     status_data = pv_meter.get_vsnx00_status_data()
     if status_data is None:
@@ -186,7 +186,7 @@ def get_vsnx00_data(config):
         vsnx00_data.update(status_data)
     logger.debug("End - get_vsnx00_status_data")
 
-    # VSN700 livedata
+    # VSNx00 livedata
     logger.debug("Start - get_vsnx00_live_data")
     live_data = pv_meter.get_vsnx00_live_data()
     if live_data is None:
@@ -197,7 +197,7 @@ def get_vsnx00_data(config):
         vsnx00_data.update(live_data)
     logger.debug("End - get_vsnx00_live_data")
 
-    # VSN700 feeds
+    # VSNx00 feeds
     logger.debug("Start - get_vsnx00_feeds_data")
     feeds_data = pv_meter.get_vsnx00_feeds_data()
     if feeds_data is None:
@@ -212,8 +212,12 @@ def get_vsnx00_data(config):
     logger.debug(vsnx00_data)
     logger.debug("======= get_vsnx00_data(): END ===========")
 
-    # JSONify the three merged dicts
-    vsnx00_data = json.dumps(vsnx00_data)
+    # Write the prettified JSON to a file
+    with open('vsnx00_data.json', 'w') as f:
+        json.dump(vsnx00_data, f, indent=2)
+
+    # JSONify and prettify the three merged dicts
+    vsnx00_data = json.dumps(vsnx00_data, indent=2)
 
     # return json response
     return vsnx00_data
@@ -312,16 +316,17 @@ def main():
     if vsnx00_data is None:
         logger.error("Error capturing data. Exiting...")
     else:
-        logger.info("Data capture ended. Here's the JSON data:")
+        logger.info("Data capture complete. Here's the JSON data:")
         logger.info("========= VSNX00 Data =========")
         logger.info(vsnx00_data)
         logger.info("========= VSNX00 Data =========")
+        print ("\nData capture complete, file vsnx00_data.json created.\n")
         return vsnx00_data
 
 # Begin
 try:
-    print(main())
-    # main()
+    # print(main())
+    main()
 except KeyboardInterrupt:
     # quit
     print ("...Ctrl-C received!... exiting")
