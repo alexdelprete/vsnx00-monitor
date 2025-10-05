@@ -90,7 +90,7 @@ class vsnx00Reader():
         self.host = parsed_url.hostname
         self.user = user
         self.password = password
-        self.realm = None
+        self.realm = ""
 
         self.status_data = dict()
         self.live_data = dict()
