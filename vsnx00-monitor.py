@@ -65,7 +65,7 @@ class VSN700HTTPPreemptiveBasicAuthHandler(HTTPBasicAuthHandler):
     # Note: please use realm=None when calling add_password
     def http_request(self, req):
         url = req.get_full_url()
-        realm = None
+        realm = ""
         # this is very similar to the code from retry_http_basic_auth()
         # but returns a request object
         user, pw = self.passwd.find_user_password(realm, url)
@@ -114,6 +114,8 @@ class vsnx00Reader():
 
         self.logger.info("Opening status URL")
         json_response = make_request(url_status_data)
+        if json_response is None:
+            return None
         self.logger.info("JSON to object")
         parsed_json = json.load(json_response)
 
@@ -132,6 +134,8 @@ class vsnx00Reader():
 
         self.logger.info("Opening livedata URL")
         json_response = make_request(url_live_data)
+        if json_response is None:
+            return None
         self.logger.info("JSON to object")
         parsed_json = json.load(json_response)
 
@@ -150,6 +154,8 @@ class vsnx00Reader():
 
         self.logger.info("Opening feeds URL")
         json_response = make_request(url_feeds_data)
+        if json_response is None:
+            return None
         self.logger.info("JSON to object")
         parsed_json = json.load(json_response)
 
@@ -238,18 +244,18 @@ def write_config(path):
 
     path = os.path.expanduser(path)
 
-    with open(path, 'wb') \
+    with open(path, 'w') \
             as configfile:
         config.write(configfile)
 
-        print(("Config has been written to: {0}").\
+        print("Config has been written to: {0}".\
             format(os.path.expanduser(path)))
 
 
 def read_config(path):
 
     if not os.path.isfile(path):
-        print(("Config file not found: {0}".format(path)))
+        print("Config file not found: {0}".format(path))
         exit()
 
     else:
@@ -298,7 +304,7 @@ def main():
     logger.addHandler(ch)
 
     if args.writeconfig:
-        write_config(args.create_config)
+        write_config(args.writeconfig)
         exit()
 
     if args.config is None:
@@ -320,7 +326,7 @@ def main():
         logger.info("========= VSNX00 Data =========")
         logger.info(vsnx00_data)
         logger.info("========= VSNX00 Data =========")
-        print ("\nData capture complete, file vsnx00_data.json created.\n")
+        print("\nData capture complete, file vsnx00_data.json created.\n")
         return vsnx00_data
 
 # Begin
@@ -329,5 +335,5 @@ try:
     main()
 except KeyboardInterrupt:
     # quit
-    print ("...Ctrl-C received!... exiting")
+    print("...Ctrl-C received!... exiting")
     sys.exit()
