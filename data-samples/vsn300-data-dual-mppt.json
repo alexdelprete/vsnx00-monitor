@@ -1,0 +1,273 @@
+{
+  "mfg.part_number": {
+    "Label": "",
+    "Value": "-3N16-"
+  },
+  "mfg.serial_number": {
+    "Label": "",
+    "Value": "843040"
+  },
+  "mfg.week_year": {
+    "Label": "",
+    "Value": "4715"
+  },
+  "logger.sn": {
+    "Label": "",
+    "Value": "843040-3N16-4715"
+  },
+  "fw.build_date": {
+    "Label": "",
+    "Value": "Thu Nov 16 17:04:58 CET 2017"
+  },
+  "fw.release_number": {
+    "Label": "",
+    "Value": "1.9.2"
+  },
+  "fw.build_number": {
+    "Label": "",
+    "Value": "r1364-5b9c418"
+  },
+  "fw.revision": {
+    "Label": "",
+    "Value": "W192"
+  },
+  "logger.board_model": {
+    "Label": "",
+    "Value": "WIFI LOGGER CARD"
+  },
+  "device.0.devName": {
+    "Label": "Device Name",
+    "Value": "Supervisor"
+  },
+  "device.0.devType": {
+    "Label": "Device type",
+    "Value": "Partner"
+  },
+  "logger.hostname": {
+    "Label": "",
+    "Value": "ABB-791530-3G03-2915.local"
+  },
+  "device.0.fwVer": {
+    "Label": "Fw Version",
+    "Value": "C033"
+  },
+  "device.1.devName": {
+    "Label": "Device Name",
+    "Value": "Booster"
+  },
+  "device.1.devType": {
+    "Label": "Device type",
+    "Value": "Partner"
+  },
+  "device.1.fwVer": {
+    "Label": "Firmware Version",
+    "Value": "A303"
+  },
+  "device.2.devName": {
+    "Label": "Device Name",
+    "Value": "Inverter"
+  },
+  "device.2.devType": {
+    "Label": "Device type",
+    "Value": "Partner"
+  },
+  "device.2.fwVer": {
+    "Label": "Firmware Version",
+    "Value": "B307"
+  },
+  "device.model": {
+    "Label": "Model Type",
+    "Value": "6"
+  },
+  "device.invID": {
+    "Label": "Inverter ID",
+    "Value": "791530-3G03-2915"
+  },
+  "device.protocol": {
+    "Label": "Communication Protocol",
+    "Value": "Aurora Legacy"
+  },
+  "device.modelDesc": {
+    "Label": "Model Description",
+    "Value": "PVI-6000-OUTD"
+  },
+  "device.ACType": {
+    "Label": "Inverter ID",
+    "Value": "Single"
+  },
+  "device.startup_time": {
+    "Label": "Inverter Time",
+    "Value": "1701159404"
+  },
+  "wlan.0.dhcpState": {
+    "Label": "",
+    "Value": "acquired"
+  },
+  "wlan.0.dns": {
+    "Label": "",
+    "Value": "10.1.12.1"
+  },
+  "wlan.0.ipaddr": {
+    "Label": "",
+    "Value": "10.1.12.101"
+  },
+  "wlan.0.netmask": {
+    "Label": "",
+    "Value": "255.255.255.0"
+  },
+  "wlan.0.broadcast": {
+    "Label": "",
+    "Value": "10.1.12.255"
+  },
+  "wlan.0.gateway": {
+    "Label": "",
+    "Value": "10.1.12.1"
+  },
+  "wlan.fsm_status": {
+    "Label": "",
+    "Value": "connected"
+  },
+  "wlan.0.status": {
+    "Label": "",
+    "Value": "connected"
+  },
+  "wlan.ap.status": {
+    "Label": "",
+    "Value": "off"
+  },
+  "m101_1_A": {
+    "Title": "IGrid",
+    "Value": 2.177997350692749,
+    "Unit": "A"
+  },
+  "m101_1_DCW": {
+    "Title": "Pin",
+    "Value": 0.4515489411251572,
+    "Unit": "kW"
+  },
+  "m101_1_Hz": {
+    "Title": "FGrid",
+    "Value": 60.01536560058594,
+    "Unit": "Hz"
+  },
+  "m101_1_PF": {
+    "Title": "Cos phi",
+    "Value": 1.0,
+    "Unit": ""
+  },
+  "m101_1_PhVphA": {
+    "Title": "VGrid",
+    "Value": 208.9112091064453,
+    "Unit": "V"
+  },
+  "m101_1_PowerPeakAbs": {
+    "Title": "Absolute Pout peak",
+    "Value": 6.173084277580756,
+    "Unit": "kW"
+  },
+  "m101_1_PowerPeakToday": {
+    "Title": "Pout Peak of the day ",
+    "Value": 0.9989058701993869,
+    "Unit": "kW"
+  },
+  "m101_1_TmpCab": {
+    "Title": "Ambient stage temperature",
+    "Value": 6.163163901135286E-33,
+    "Unit": "degC"
+  },
+  "m101_1_TmpOt": {
+    "Title": "Inverter stage temperature",
+    "Value": 31.516019821166992,
+    "Unit": "degC"
+  },
+  "m101_1_W": {
+    "Title": "Pout",
+    "Value": 0.4380024927278292,
+    "Unit": "kW"
+  },
+  "m101_1_WH": {
+    "Title": "Lifetime Energy",
+    "Value": 52467.854492089245,
+    "Unit": "kWh"
+  },
+  "m160_1_DCA_1": {
+    "Title": "Iin1",
+    "Value": 0.7685424089431763,
+    "Unit": "A"
+  },
+  "m160_1_DCA_2": {
+    "Title": "Iin2",
+    "Value": 0.7419576048851013,
+    "Unit": "A"
+  },
+  "m160_1_DCV_1": {
+    "Title": "Vin1",
+    "Value": 327.95587158203125,
+    "Unit": "V"
+  },
+  "m160_1_DCV_2": {
+    "Title": "Vin2",
+    "Value": 306.1156921386719,
+    "Unit": "V"
+  },
+  "m160_1_DCW_1": {
+    "Title": "Pin1",
+    "Value": 0.2368057973804838,
+    "Unit": "kW"
+  },
+  "m160_1_DCW_2": {
+    "Title": "Pin2",
+    "Value": 0.2147431437446734,
+    "Unit": "kW"
+  },
+  "m64061_1_Booster_Tmp": {
+    "Title": "Booster stage temperature",
+    "Value": 30.104583740234375,
+    "Unit": "degC"
+  },
+  "m64061_1_DayWH": {
+    "Title": "Energy today",
+    "Value": 0.7030000333907083,
+    "Unit": "kWh"
+  },
+  "m64061_1_ILeakDcAc": {
+    "Title": "Ileak 1",
+    "Value": 0.0,
+    "Unit": "uA"
+  },
+  "m64061_1_ILeakDcDc": {
+    "Title": "Ileak 2",
+    "Value": 0.0,
+    "Unit": "uA"
+  },
+  "m64061_1_Isolation_Ohm1": {
+    "Title": "Riso",
+    "Value": 6.941341876983643,
+    "Unit": "MOhm"
+  },
+  "m64061_1_MonthWH": {
+    "Title": "Energy current month",
+    "Value": 422.2630200564163,
+    "Unit": "kWh"
+  },
+  "m64061_1_VBulk": {
+    "Title": "Vbulk",
+    "Value": 359.1244812011719,
+    "Unit": "V"
+  },
+  "m64061_1_VBulkMid": {
+    "Title": "Vbulk_mid",
+    "Value": 182.07359313964844,
+    "Unit": "V"
+  },
+  "m64061_1_WeekWH": {
+    "Title": "Energy current week",
+    "Value": 32.19300152908545,
+    "Unit": "kWh"
+  },
+  "m64061_1_YearWH": {
+    "Title": "Energy current year",
+    "Value": 6210.143294965965,
+    "Unit": "kWh"
+  }
+}
