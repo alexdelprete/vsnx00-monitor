@@ -16,8 +16,8 @@ from urllib.request import (HTTPBasicAuthHandler, HTTPDigestAuthHandler,
 
 def make_request(requested_url):
     try:
-        unverified_context = ssl._create_unverified_context()
-        return urlopen(requested_url, timeout=10, context=unverified_context)
+        # DO NOT pass context parameter - it bypasses the installed opener with auth handlers!
+        return urlopen(requested_url, timeout=10)
     except HTTPError as error:
         print(error.status, error.reason)
     except URLError as error:
@@ -65,7 +65,7 @@ class VSN700HTTPPreemptiveBasicAuthHandler(HTTPBasicAuthHandler):
     # Note: please use realm=None when calling add_password
     def http_request(self, req):
         url = req.get_full_url()
-        realm = ""
+        realm = None
         # this is very similar to the code from retry_http_basic_auth()
         # but returns a request object
         user, pw = self.passwd.find_user_password(realm, url)
@@ -90,7 +90,7 @@ class vsnx00Reader():
         self.host = parsed_url.hostname
         self.user = user
         self.password = password
-        self.realm = ""
+        self.realm = None
 
         self.status_data = dict()
         self.live_data = dict()
@@ -244,18 +244,18 @@ def write_config(path):
 
     path = os.path.expanduser(path)
 
-    with open(path, 'w') \
+    with open(path, 'wb') \
             as configfile:
         config.write(configfile)
 
-        print("Config has been written to: {0}".\
+        print(("Config has been written to: {0}").\
             format(os.path.expanduser(path)))
 
 
 def read_config(path):
 
     if not os.path.isfile(path):
-        print("Config file not found: {0}".format(path))
+        print(("Config file not found: {0}".format(path)))
         exit()
 
     else:
@@ -304,7 +304,7 @@ def main():
     logger.addHandler(ch)
 
     if args.writeconfig:
-        write_config(args.writeconfig)
+        write_config(args.create_config)
         exit()
 
     if args.config is None:
@@ -326,7 +326,7 @@ def main():
         logger.info("========= VSNX00 Data =========")
         logger.info(vsnx00_data)
         logger.info("========= VSNX00 Data =========")
-        print("\nData capture complete, file vsnx00_data.json created.\n")
+        print ("\nData capture complete, file vsnx00_data.json created.\n")
         return vsnx00_data
 
 # Begin
@@ -335,5 +335,5 @@ try:
     main()
 except KeyboardInterrupt:
     # quit
-    print("...Ctrl-C received!... exiting")
+    print ("...Ctrl-C received!... exiting")
     sys.exit()
