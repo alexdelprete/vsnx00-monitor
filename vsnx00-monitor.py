@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import sys
+import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import (
@@ -86,6 +87,76 @@ class VSN700HTTPPreemptiveBasicAuthHandler(HTTPBasicAuthHandler):
 
 
 class vsnx00Reader:
+    def _detect_device_type(self):
+        """
+        Detect whether device is VSN300 or VSN700 by analyzing authentication challenge.
+
+        Makes an unauthenticated request to /v1/status and examines the WWW-Authenticate
+        header in the 401 response to determine the authentication scheme required.
+
+        Returns:
+            str: 'VSN300' if X-Digest/Digest auth is required, 'VSN700' if Basic auth
+
+        Raises:
+            Exception: If device type cannot be detected after retries
+        """
+        probe_url = self.url + "/v1/status"
+        max_retries = 3
+        retry_delay = 2  # seconds
+
+        for attempt in range(max_retries):
+            try:
+                self.logger.info(
+                    f"Detecting device type (attempt {attempt + 1}/{max_retries})..."
+                )
+                # Make request without authentication - expect 401
+                urlopen(probe_url, timeout=10)
+                # If we get here (no 401), something unexpected happened
+                self.logger.warning("Device did not require authentication - unexpected")
+
+            except HTTPError as error:
+                if error.status == 401:
+                    # Expected - examine the WWW-Authenticate header
+                    auth_header = error.headers.get("WWW-Authenticate", "")
+                    self.logger.debug(f"WWW-Authenticate header: {auth_header}")
+
+                    if "x-digest" in auth_header.lower() or "digest" in auth_header.lower():
+                        self.logger.info("Detected VSN300 device (X-Digest authentication)")
+                        return "VSN300"
+                    elif "basic" in auth_header.lower():
+                        self.logger.info("Detected VSN700 device (Basic authentication)")
+                        return "VSN700"
+                    else:
+                        self.logger.warning(
+                            f"Unknown authentication scheme: {auth_header}"
+                        )
+                else:
+                    # Unexpected HTTP error
+                    self.logger.warning(
+                        f"Unexpected HTTP error {error.status}: {error.reason}"
+                    )
+
+            except URLError as error:
+                # Network error - retry
+                self.logger.warning(
+                    f"Network error during detection: {error.reason}"
+                )
+                if attempt < max_retries - 1:
+                    self.logger.info(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+
+            except TimeoutError:
+                self.logger.warning("Request timed out during device detection")
+                if attempt < max_retries - 1:
+                    self.logger.info(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+
+        # If we get here, all retries failed
+        raise Exception(
+            f"Failed to detect device type after {max_retries} attempts. "
+            "Please check device connectivity and try again."
+        )
+
     def __init__(self, url, user, password):
         self.logger = logging.getLogger(__name__)
 
@@ -101,11 +172,21 @@ class vsnx00Reader:
         self.feeds_data = dict()
         self.vsnx00_data = dict()
 
+        # Detect device type first
+        device_type = self._detect_device_type()
+
+        # Setup authentication based on detected device type
         self.passman = HTTPPasswordMgrWithPriorAuth()
         self.passman.add_password(self.realm, self.url, self.user, self.password)
-        self.handler_vsn300 = VSN300HTTPDigestAuthHandler(self.passman)
-        self.handler_vsn700 = VSN700HTTPPreemptiveBasicAuthHandler(self.passman)
-        self.opener = build_opener(self.handler_vsn700, self.handler_vsn300)
+
+        if device_type == "VSN300":
+            self.logger.info("Initializing VSN300 X-Digest authentication handler")
+            handler = VSN300HTTPDigestAuthHandler(self.passman)
+        else:  # VSN700
+            self.logger.info("Initializing VSN700 Basic authentication handler")
+            handler = VSN700HTTPPreemptiveBasicAuthHandler(self.passman)
+
+        self.opener = build_opener(handler)
         install_opener(self.opener)
 
     def get_vsnx00_status_data(self):
