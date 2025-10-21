@@ -1,3 +1,4 @@
 ﻿/dont-sync/*
 .claude/
+__pycache__/
 vsnx00_data*.json
