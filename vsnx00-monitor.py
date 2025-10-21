@@ -170,7 +170,6 @@ class vsnx00Reader:
         self.status_data = dict()
         self.live_data = dict()
         self.feeds_data = dict()
-        self.vsnx00_data = dict()
 
         # Detect device type first
         device_type = self._detect_device_type()
@@ -299,9 +298,18 @@ def get_vsnx00_data(config):
     logger.debug(vsnx00_data)
     logger.debug("======= get_vsnx00_data(): END ===========")
 
-    # Write the prettified JSON to a file
-    with open("vsnx00_data.json", "w") as f:
-        json.dump(vsnx00_data, f, indent=2)
+    # Write separate JSON files for each endpoint
+    logger.info("Writing status data to vsnx00_data_status.json")
+    with open("vsnx00_data_status.json", "w") as f:
+        json.dump(status_data, f, indent=2)
+
+    logger.info("Writing livedata to vsnx00_data_livedata.json")
+    with open("vsnx00_data_livedata.json", "w") as f:
+        json.dump(live_data, f, indent=2)
+
+    logger.info("Writing feeds data to vsnx00_data_feeds.json")
+    with open("vsnx00_data_feeds.json", "w") as f:
+        json.dump(feeds_data, f, indent=2)
 
     # JSONify and prettify the three merged dicts
     vsnx00_data = json.dumps(vsnx00_data, indent=2)
@@ -422,7 +430,10 @@ def main():
         logger.info("========= VSNX00 Data =========")
         logger.info(vsnx00_data)
         logger.info("========= VSNX00 Data =========")
-        print("\nData capture complete, file vsnx00_data.json created.\n")
+        print("\nData capture complete. Created 3 files:")
+        print("  - vsnx00_data_status.json")
+        print("  - vsnx00_data_livedata.json")
+        print("  - vsnx00_data_feeds.json\n")
         return vsnx00_data
 
 

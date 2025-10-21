@@ -13,7 +13,10 @@ Python script for capturing and exporting solar inverter data from ABB VSN300 an
 - `/v1/livedata` - Real-time inverter data
 - `/v1/feeds` - Historical feed data
 
-**Output:** JSON file (vsnx00_data.json) containing all captured data
+**Output:** Three separate JSON files, one per endpoint:
+- `vsnx00_data_status.json` - Device status information
+- `vsnx00_data_livedata.json` - Real-time inverter data
+- `vsnx00_data_feeds.json` - Historical feed data
 
 ---
 
@@ -362,11 +365,13 @@ Through browser dev tools inspection of the VSN300 web interface:
 
 ```
 vsnx00-monitor/
-├── vsnx00-monitor.py       # Main script
-├── vsnx00-monitor.cfg      # Configuration file (user-editable)
-├── .gitignore              # Excludes .claude/ and vsnx00_data.json
-├── claude.md               # This documentation file
-└── vsnx00_data.json        # Generated output (ignored by git)
+├── vsnx00-monitor.py          # Main script
+├── vsnx00-monitor.cfg         # Configuration file (user-editable)
+├── .gitignore                 # Excludes .claude/ and vsnx00_data*.json
+├── CLAUDE.md                  # This documentation file
+├── vsnx00_data_status.json    # Generated output (ignored by git)
+├── vsnx00_data_livedata.json  # Generated output (ignored by git)
+└── vsnx00_data_feeds.json     # Generated output (ignored by git)
 ```
 
 ### Release v1.0.0
@@ -396,12 +401,13 @@ and VSN700 solar inverter data loggers via their REST API endpoints.
 
 ```
 .claude/              # Claude Code configuration
-vsnx00_data.json      # Generated output file
+vsnx00_data*.json     # Generated output files (pattern matches all 3 files)
 ```
 
 **Why ignored:**
 - `.claude/`: IDE-specific configuration, not part of the application
-- `vsnx00_data.json`: Generated output file containing live data, should not be in version control
+- `vsnx00_data*.json`: Generated output files containing live data from endpoints, should not be in version control
+  - Matches: `vsnx00_data_status.json`, `vsnx00_data_livedata.json`, `vsnx00_data_feeds.json`
 
 ---
 
